@@ -1,0 +1,5 @@
+id,fluxo,etapa,status,mensagem,timestamp
+7bb5ffdc-3003-4327-97fa-9411b0aa7e01,ETL_IA_CLASSIFICACAO,Query dinamica no supabase,vazio,Nenhum vídeo encontrado para classificação,2025-06-21 19:59:30.206577
+a87b0391-6194-4de6-aaf7-485b79551ce2,ETL_IA_CLASSIFICACAO,Query dinamica no supabase,vazio,Nenhum vídeo encontrado para classificação,2025-06-21 19:29:10.630687
+d611efaa-7617-4fa1-a0cb-3a50f46d1872,ETL_IA_CLASSIFICACAO,Query dinamica no supabase,vazio,Nenhum vídeo encontrado para classificação,2025-06-21 19:23:27.071092
+f641fed5-2894-40aa-90df-75508982b308,ETL_IA_CLASSIFICACAO,Query dinamica no supabase,vazio,Nenhum vídeo encontrado para classificação,2025-06-21 19:26:53.632748
