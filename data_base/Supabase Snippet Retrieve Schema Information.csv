@@ -1,0 +1,44 @@
+table_name,column_name,data_type,is_nullable,character_maximum_length,column_default
+dim_classificacao_ia,id,uuid,NO,null,gen_random_uuid()
+dim_classificacao_ia,video_id,text,NO,null,null
+dim_classificacao_ia,classificacao_desc,text,YES,null,null
+dim_classificacao_ia,classificacao_score,numeric,YES,null,null
+dim_classificacao_ia,created_date,timestamp with time zone,YES,null,now()
+dim_classificacao_ia,observacoes_ia,text,YES,null,null
+dim_classificacao_ia,nivel_tecnico,numeric,YES,null,null
+dim_classificacao_ia,intencao_principal,text,YES,null,null
+dim_classificacao_ia,intencao_secundaria,text,YES,null,null
+dim_classificacao_ia,linguagem,text,YES,null,null
+etl_logs,id,uuid,NO,null,gen_random_uuid()
+etl_logs,fluxo,text,YES,null,null
+etl_logs,etapa,text,YES,null,null
+etl_logs,status,text,YES,null,null
+etl_logs,mensagem,text,YES,null,null
+etl_logs,timestamp,timestamp without time zone,YES,null,now()
+fact_videos,id,text,NO,null,null
+fact_videos,title,text,NO,null,null
+fact_videos,description,text,YES,null,null
+fact_videos,thumbnail_high,text,YES,null,null
+fact_videos,channel_id,text,NO,null,null
+fact_videos,published_at,timestamp with time zone,NO,null,null
+fact_videos,duration_raw,text,YES,null,null
+fact_videos,duration_sec,integer,YES,null,null
+fact_videos,duration_hhmmss,text,YES,null,null
+fact_videos,view_count,bigint,YES,null,0
+fact_videos,like_count,bigint,YES,null,0
+fact_videos,favorite_count,bigint,YES,null,0
+fact_videos,comment_count,bigint,YES,null,0
+fact_videos,tags,jsonb,YES,null,'[]'::jsonb
+fact_videos,topic_categories,jsonb,YES,null,'[]'::jsonb
+fact_videos,channel_title,text,NO,null,''::text
+fact_videos,create_date,timestamp with time zone,NO,null,now()
+fact_videos,last_modified_date,timestamp with time zone,YES,null,null
+fact_videos,video_language,text,YES,null,null
+vw_dim_canal,channel_id,text,YES,null,null
+vw_dim_canal,channel_title,text,YES,null,null
+vw_dim_duracao,id,text,YES,null,null
+vw_dim_duracao,duration_sec,integer,YES,null,null
+vw_dim_duracao,duracao_faixa,text,YES,null,null
+vw_dim_linguagem,video_language,text,NO,null,null
+vw_dim_linguagem,idioma,text,NO,null,null
+vw_dim_linguagem,regiao,text,NO,null,null
