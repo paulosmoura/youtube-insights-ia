@@ -1,0 +1,141 @@
+{
+  "name": "ETL_ERROR_LOGS_WORKFLOW",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        -380,
+        40
+      ],
+      "id": "67be3c15-31df-4395-8c9c-ea6111360c9b",
+      "name": "Error Trigger"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "etl_logs",
+          "mode": "list",
+          "cachedResultName": "etl_logs"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "fluxo": "ETL_IA_CLASSIFICACAO",
+            "etapa": "{{ $error.node.name }}",
+            "status": "erro",
+            "mensagem": "{{ $error.message }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "fluxo",
+              "displayName": "fluxo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "etapa",
+              "displayName": "etapa",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "mensagem",
+              "displayName": "mensagem",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -120,
+        40
+      ],
+      "id": "0eaf6e0b-cd5d-4a7d-8778-b446f03a1a9d",
+      "name": "Fazer Captura do Erro",
+      "credentials": {
+        "postgres": {
+          "id": "n3sBuzz4GDYDXX7w",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Fazer Captura do Erro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "8637f4b1-8f7f-4aac-b772-afb665da4364",
+  "meta": {
+    "instanceId": "461d80cab58e123c9e6a3b13bee9316057fca5e248fd328b1b80deb71002d61d"
+  },
+  "id": "McgGd6aU5ysia89C",
+  "tags": []
+}
