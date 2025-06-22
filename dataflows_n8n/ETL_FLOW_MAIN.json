@@ -1,0 +1,1251 @@
+{
+  "name": "ETL_FLOW_MAIN",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        460,
+        -120
+      ],
+      "id": "862e712c-1954-4e12-9b70-ac8a5405ee79",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "jsCode": "const prev = items[0].json;\nconst prevALL = Array.isArray(prev.allVideos) ? prev.allVideos : [];\n\nconst rawItems = items[0].json.items || [];\nconst newItems = Array.isArray(rawItems)\n  ? rawItems.map(item => ({\n      videoId: item.id.videoId,\n      title: item.snippet.title,\n      channelId: item.snippet.channelId,\n      publishedAt: item.snippet.publishedAt,\n      searchTerm: prev.q,\n      idioma: prev.idioma,\n      origem: prev.origem\n    }))\n  : [];\n\nreturn [{\n  json: {\n    allVideos: [...prevALL, ...newItems],\n    pageToken: items[0].json.nextPageToken || '',\n    currentPage: typeof prev.currentPage === 'number' ? prev.currentPage + 1 : 1,\n    maxPages: typeof prev.maxPages === 'number' ? prev.maxPages : 3,\n    q: prev.q,\n    idioma: prev.idioma,\n    origem: prev.origem\n  }\n}];\n"
+      },
+      "id": "a61bc81b-c7f4-440d-abb0-78967ec2f776",
+      "name": "Acumular Vídeos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        1720,
+        140
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [],
+          "number": [
+            {
+              "value1": "={{ $json.currentPage }}",
+              "value2": "={{ $json.maxPages }}"
+            }
+          ],
+          "string": [
+            {
+              "value1": "={{ $json.pageToken }}",
+              "operation": "notEqual"
+            }
+          ]
+        }
+      },
+      "id": "f761fd07-1b2d-45c7-b6f7-663355cc744a",
+      "name": "Checar Próxima Página",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        1900,
+        140
+      ],
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "url": "https://www.googleapis.com/youtube/v3/search",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "key",
+              "value": "AIzaSyCFsTAyE89WR08MiIQBbunTPoSLLarlSEo"
+            },
+            {
+              "name": "part",
+              "value": "snippet"
+            },
+            {
+              "name": "q",
+              "value": "={{ $json.q }}"
+            },
+            {
+              "name": "type",
+              "value": "video"
+            },
+            {
+              "name": "maxResults",
+              "value": "50"
+            },
+            {
+              "name": "order",
+              "value": "viewCount"
+            },
+            {
+              "name": "publishedAfter",
+              "value": "2024-01-01T00:00:00Z"
+            },
+            {
+              "name": "pageToken",
+              "value": "={{ $json.pageToken }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1060,
+        -20
+      ],
+      "id": "6f9a7730-bcd7-4c08-9328-37a5764e8db2",
+      "name": "Lista de Vídeos"
+    },
+    {
+      "parameters": {
+        "amount": 10
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1560,
+        140
+      ],
+      "id": "e4d6a4b2-dd48-47c7-ab5f-1f8998e734b0",
+      "name": "Wait",
+      "webhookId": "5fe6c6ab-7d2f-46c9-80de-d9fd46f28a92"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        880,
+        -120
+      ],
+      "id": "3428bcb6-74ea-427b-83b6-277a55874c02",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        2080,
+        -120
+      ],
+      "id": "30c17cd5-a919-4c15-a889-00f39cbe64f0",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst flat = items.flatMap(i => i.json.allVideos);\nconst seen = new Set();\nreturn flat\n  .filter(v => {\n    if (seen.has(v.videoId)) return false;\n    seen.add(v.videoId);\n    return true;\n  })\n  .map(v => ({ json: v }));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2260,
+        -120
+      ],
+      "id": "66251a4f-551d-4feb-80e4-95f7c88d9e1c",
+      "name": "Ajustar  Output Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "const responseItem = items.find(i => Array.isArray(i.json.items));\nif (!responseItem) return [];\nreturn responseItem.json.items.map(video => ({ json: video }));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3680,
+        180
+      ],
+      "id": "197bc962-548c-4afe-a52f-0822ea85c4c4",
+      "name": "Ajustar Detalhes"
+    },
+    {
+      "parameters": {
+        "amount": 15
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3460,
+        160
+      ],
+      "id": "bd2a51b3-2fb4-4546-b2d0-fc894a348b97",
+      "name": "Wait1",
+      "webhookId": "8d58d587-dc25-446e-ac3e-85b63a44b908"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ids = items.map(i => i.json.videoId).join(',');\nreturn [{ json: { ids } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2760,
+        -20
+      ],
+      "id": "d304baab-1709-4d5b-95e1-00d162c8ef01",
+      "name": "Ajsute de IDs"
+    },
+    {
+      "parameters": {
+        "url": "https://www.googleapis.com/youtube/v3/videos",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "part",
+              "value": "snippet,contentDetails,statistics,topicDetails"
+            },
+            {
+              "name": "id",
+              "value": "={{$json.ids}}"
+            },
+            {
+              "name": "key",
+              "value": "AIzaSyCFsTAyE89WR08MiIQBbunTPoSLLarlSEo"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2980,
+        -20
+      ],
+      "id": "c6af96c3-ae45-40b6-9f0e-96cd505a5557",
+      "name": "Buscar Detalhes",
+      "executeOnce": true
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        3760,
+        -120
+      ],
+      "id": "06d8bbc7-0612-4e6f-887b-74eb773a63a7",
+      "name": "Agrupar Detalhes"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  const v = item.json;\n\n  const iso = v.contentDetails?.duration || '';\n  const parts = iso.match(/PT(?:(\\d+)H)?(?:(\\d+)M)?(?:(\\d+)S)?/);\n  const h = parseInt(parts?.[1] || '0', 10);\n  const m = parseInt(parts?.[2] || '0', 10);\n  const s = parseInt(parts?.[3] || '0', 10);\n  const totalSec = h * 3600 + m * 60 + s;\n  const pad = num => String(num).padStart(2, '0');\n  const hhmmss = `${pad(h)}:${pad(m)}:${pad(s)}`;\n\n  const tagsArray = v.snippet?.tags || [];\n  const topicArray = v.topicDetails?.topicCategories || [];\n  const videoLang = v.snippet?.defaultAudioLanguage || v.snippet?.defaultLanguage || null;\n\n  return {\n    json: {\n      ...v,\n      tags: tagsArray,\n      topic_categories: topicArray,\n      durationRaw: iso,\n      durationSec: totalSec,\n      durationHHMMSS: hhmmss,\n      video_language: videoLang  // <- nova coluna aqui\n    }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4020,
+        -120
+      ],
+      "id": "7291367f-0f94-42d8-826d-d8bf461f25ca",
+      "name": "Ajustar Output"
+    },
+    {
+      "parameters": {
+        "batchSize": 25,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        2480,
+        -120
+      ],
+      "id": "5344a94c-1c97-49ee-9688-f4fbc24b3511",
+      "name": "Loop Buscar detalhes"
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "fact_videos",
+          "mode": "list",
+          "cachedResultName": "fact_videos"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "duration_sec": "={{ $json.durationSec }}",
+            "duration_hhmmss": "={{ $json.durationHHMMSS }}",
+            "id": "={{ $json.id }}",
+            "title": "={{ $json.snippet.title }}",
+            "description": "={{ $json.snippet.description }}",
+            "thumbnail_high": "={{ $json.snippet.thumbnails.high.url }}",
+            "channel_id": "={{ $json.snippet.channelId }}",
+            "published_at": "={{ $json.snippet.publishedAt }}",
+            "view_count": "={{ $json.statistics.viewCount }}",
+            "like_count": "={{ $json.statistics.likeCount }}",
+            "favorite_count": "={{ $json.statistics.favoriteCount }}",
+            "comment_count": "={{ $json.statistics.commentCount }}",
+            "channel_title": "={{ $json.snippet.channelTitle }}",
+            "last_modified_date": "={{ $now }}",
+            "video_language": "={{ $json.snippet.defaultLanguage }}",
+            "tags": "={{ $json.tags }}",
+            "topic_categories": "={{ $json.topic_categories }}",
+            "duration_raw": "={{ $json.durationRaw }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": true,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "description",
+              "displayName": "description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "thumbnail_high",
+              "displayName": "thumbnail_high",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "channel_id",
+              "displayName": "channel_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "published_at",
+              "displayName": "published_at",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "duration_raw",
+              "displayName": "duration_raw",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "duration_sec",
+              "displayName": "duration_sec",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "duration_hhmmss",
+              "displayName": "duration_hhmmss",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "view_count",
+              "displayName": "view_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "like_count",
+              "displayName": "like_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "favorite_count",
+              "displayName": "favorite_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "comment_count",
+              "displayName": "comment_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "tags",
+              "displayName": "tags",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "topic_categories",
+              "displayName": "topic_categories",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "channel_title",
+              "displayName": "channel_title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "create_date",
+              "displayName": "create_date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "last_modified_date",
+              "displayName": "last_modified_date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "video_language",
+              "displayName": "video_language",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "queryBatching": "single",
+          "replaceEmptyStrings": true
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        5060,
+        -20
+      ],
+      "id": "040e5803-bce5-4b31-bf95-1d745617462f",
+      "name": "Postgres -> Upsert Supabase",
+      "credentials": {
+        "postgres": {
+          "id": "n3sBuzz4GDYDXX7w",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "batchSize": 50,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        4340,
+        -120
+      ],
+      "id": "7d99542e-ed7e-4e63-9670-3a1b9b6c3a58",
+      "name": "Loop - Lotes de Insert ou Update"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  return {\n    json: {\n      ...item.json,\n      tags: { tags: item.json.tags }, // ← transforma array em objeto\n      topic_categories: { categories: item.json.topic_categories }\n    }\n  }\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4680,
+        -20
+      ],
+      "id": "ffb6e77b-36ae-470f-80af-33578d44aabf",
+      "name": "Ajustar Arrays"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b8efe656-20f8-4301-99dd-b4efabfcf5d5",
+              "leftValue": "={{ $json.statusCode === 200 }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1280,
+        -20
+      ],
+      "id": "c9593c81-9512-4465-a28c-8e9fe7d44fd8",
+      "name": "Validação de Erro API - Listar Vídeos"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "etl_logs",
+          "mode": "list",
+          "cachedResultName": "etl_logs"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "fluxo": "ETL_FLOW",
+            "etapa": "Listar Videos (API)",
+            "status": "error",
+            "mensagem": "Stauts 200 API erro na requisição da API YouTube Data API v3",
+            "timestamp": "={{ $now }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "fluxo",
+              "displayName": "fluxo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "etapa",
+              "displayName": "etapa",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "mensagem",
+              "displayName": "mensagem",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1560,
+        -40
+      ],
+      "id": "f00ea8d7-f22a-4071-82fc-d51d154bfd8d",
+      "name": "Captura de erro de API",
+      "credentials": {
+        "postgres": {
+          "id": "n3sBuzz4GDYDXX7w",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "6940b647-a15c-41e2-8431-284faad226ea",
+              "leftValue": "={{ $json.statusCode === 200 }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3200,
+        -20
+      ],
+      "id": "a8d26b57-3049-40a1-af2e-714c13b2dab9",
+      "name": "Validação de Erro API - Detalhes Vídeos"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "etl_logs",
+          "mode": "list",
+          "cachedResultName": "etl_logs"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "fluxo": "ETL_FLOW",
+            "etapa": "Detalhes vídeos (API)",
+            "status": "error",
+            "mensagem": "Stauts 200 API erro na requisição da API YouTube Data API v3",
+            "timestamp": "={{ $now }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "fluxo",
+              "displayName": "fluxo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "etapa",
+              "displayName": "etapa",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "mensagem",
+              "displayName": "mensagem",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        3460,
+        -40
+      ],
+      "id": "b95d1fc2-1c85-436e-9a7e-afa3f5b9a21d",
+      "name": "Captura de erro de API 2",
+      "credentials": {
+        "postgres": {
+          "id": "n3sBuzz4GDYDXX7w",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "496483ab-3772-43de-9507-3c7cb239f9f7",
+              "leftValue": "={{ Object.keys($json).length > 0 }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        4240,
+        220
+      ],
+      "id": "9487fd02-7d11-4459-96ed-427b67e03c56",
+      "name": "Validação Operação do Upsert"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "etl_logs",
+          "mode": "list",
+          "cachedResultName": "etl_logs"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "fluxo": "ETL_IA_CLASSIFICACAO",
+            "etapa": "Upsert IA Classificacao",
+            "status": "error",
+            "mensagem": "Nenhuma linha foi afetada pelo upsert (possível falha ou já existente)",
+            "timestamp": "={{ $now }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "fluxo",
+              "displayName": "fluxo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "etapa",
+              "displayName": "etapa",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "mensagem",
+              "displayName": "mensagem",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        4500,
+        300
+      ],
+      "id": "d0f7fcad-47d0-461c-97a6-faedca16c1f1",
+      "name": "Envio do Erro para base de dados",
+      "credentials": {
+        "postgres": {
+          "id": "n3sBuzz4GDYDXX7w",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const termos = [\n  // AMÉRICAS\n  { termo: \"ganhar dinheiro com IA\", idioma: \"pt\", origem: \"Brasil\", tipo: \"popular\", tema: \"Monetização\", regiao_macro: \"América do Sul\" },\n  { termo: \"make money with AI\", idioma: \"en\", origem: \"EUA\", tipo: \"popular\", tema: \"Monetização\", regiao_macro: \"América do Norte\" },\n  { termo: \"AI tutorial\", idioma: \"en\", origem: \"Canadá\", tipo: \"educacional\", tema: \"Tutoriais\", regiao_macro: \"América do Norte\" },\n  { termo: \"aprendizado de máquina\", idioma: \"pt\", origem: \"Brasil\", tipo: \"tecnico\", tema: \"Tecnologia\", regiao_macro: \"América do Sul\" },\n  { termo: \"inteligencia artificial explicada\", idioma: \"es\", origem: \"México\", tipo: \"introdutorio\", tema: \"Fundamentos\", regiao_macro: \"América Latina\" },\n\n  // EUROPA\n  { termo: \"künstliche intelligenz\", idioma: \"de\", origem: \"Alemanha\", tipo: \"tecnico\", tema: \"Tecnologia\", regiao_macro: \"Europa\" },\n  { termo: \"intelligence artificielle\", idioma: \"fr\", origem: \"França\", tipo: \"etico\", tema: \"Ética\", regiao_macro: \"Europa\" },\n  { termo: \"como a IA vai mudar o mundo\", idioma: \"pt\", origem: \"Portugal\", tipo: \"alarmista\", tema: \"Sociedade\", regiao_macro: \"Europa\" },\n\n  // ÁSIA\n  { termo: \"人工知能\", idioma: \"ja\", origem: \"Japão\", tipo: \"tecnico\", tema: \"Tecnologia\", regiao_macro: \"Ásia\" },\n  { termo: \"आर्टिफिशियल इंटेलिजेंस\", idioma: \"hi\", origem: \"Índia\", tipo: \"educacional\", tema: \"Educação\", regiao_macro: \"Ásia\" },\n  { termo: \"人工智能\", idioma: \"zh\", origem: \"China/Taiwan\", tipo: \"popular\", tema: \"Geral\", regiao_macro: \"Ásia\" },\n  { termo: \"인공지능 활용법\", idioma: \"ko\", origem: \"Coreia do Sul\", tipo: \"educacional\", tema: \"Ferramentas\", regiao_macro: \"Ásia\" },\n\n  // ÁFRICA\n  { termo: \"AI in Africa\", idioma: \"en\", origem: \"Nigéria\", tipo: \"regiao\", tema: \"Regional\", regiao_macro: \"África\" },\n  { termo: \"IA et l'avenir de l'emploi\", idioma: \"fr\", origem: \"Marrocos\", tipo: \"social\", tema: \"Trabalho e Futuro\", regiao_macro: \"África\" },\n\n  // ORIENTE MÉDIO\n  { termo: \"الذكاء الاصطناعي\", idioma: \"ar\", origem: \"Egito\", tipo: \"introdutorio\", tema: \"Fundamentos\", regiao_macro: \"Oriente Médio\" },\n  { termo: \"الذكاء الاصطناعي وتوظيفه\", idioma: \"ar\", origem: \"Arábia Saudita\", tipo: \"aplicacao\", tema: \"Trabalho\", regiao_macro: \"Oriente Médio\" },\n\n  // RÚSSIA E LESTE EUROPEU\n  { termo: \"искусственный интеллект\", idioma: \"ru\", origem: \"Rússia\", tipo: \"tecnico\", tema: \"Tecnologia\", regiao_macro: \"Europa Oriental\" },\n\n  // GERAIS / GLOBAIS\n  { termo: \"AI\", idioma: \"en\", origem: \"Global\", tipo: \"curto\", tema: \"Geral\", regiao_macro: \"Global\" },\n  { termo: \"IA\", idioma: \"pt\", origem: \"Global\", tipo: \"curto\", tema: \"Geral\", regiao_macro: \"Global\" },\n  { termo: \"inteligencia artificial\", idioma: \"es\", origem: \"Global\", tipo: \"curto\", tema: \"Geral\", regiao_macro: \"Global\" }\n];\n\nreturn termos.map(item => ({\n  json: {\n    q: item.termo,\n    idioma: item.idioma,\n    origem: item.origem,\n    tipo: item.tipo,\n    tema: item.tema,\n    regiao_macro: item.regiao_macro,\n    pageToken: '',\n    allVideos: [],\n    currentPage: 0,\n    maxPages: 3\n  }\n}));"
+      },
+      "id": "7e66c6fe-c262-4832-a4c8-c6d18055978e",
+      "name": "Iniciar Termo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        680,
+        -120
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Iniciar Termo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Acumular Vídeos": {
+      "main": [
+        [
+          {
+            "node": "Checar Próxima Página",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Checar Próxima Página": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Lista de Vídeos": {
+      "main": [
+        [
+          {
+            "node": "Validação de Erro API - Listar Vídeos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Acumular Vídeos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Lista de Vídeos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Ajustar  Output Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ajustar  Output Request": {
+      "main": [
+        [
+          {
+            "node": "Loop Buscar detalhes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ajustar Detalhes": {
+      "main": [
+        [
+          {
+            "node": "Loop Buscar detalhes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "Ajustar Detalhes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ajsute de IDs": {
+      "main": [
+        [
+          {
+            "node": "Buscar Detalhes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Detalhes": {
+      "main": [
+        [
+          {
+            "node": "Validação de Erro API - Detalhes Vídeos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agrupar Detalhes": {
+      "main": [
+        [
+          {
+            "node": "Ajustar Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ajustar Output": {
+      "main": [
+        [
+          {
+            "node": "Loop - Lotes de Insert ou Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Buscar detalhes": {
+      "main": [
+        [
+          {
+            "node": "Agrupar Detalhes",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ajsute de IDs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres -> Upsert Supabase": {
+      "main": [
+        [
+          {
+            "node": "Validação Operação do Upsert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop - Lotes de Insert ou Update": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Ajustar Arrays",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ajustar Arrays": {
+      "main": [
+        [
+          {
+            "node": "Postgres -> Upsert Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validação de Erro API - Listar Vídeos": {
+      "main": [
+        [
+          {
+            "node": "Captura de erro de API",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validação de Erro API - Detalhes Vídeos": {
+      "main": [
+        [
+          {
+            "node": "Captura de erro de API 2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validação Operação do Upsert": {
+      "main": [
+        [
+          {
+            "node": "Loop - Lotes de Insert ou Update",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Envio do Erro para base de dados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Iniciar Termo": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "5f8c588f-0937-43cc-a5cb-f35020cb7884",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "461d80cab58e123c9e6a3b13bee9316057fca5e248fd328b1b80deb71002d61d"
+  },
+  "id": "VDU2EZx9r7J9pfVi",
+  "tags": []
+}
