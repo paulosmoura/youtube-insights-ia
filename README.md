@@ -94,6 +94,7 @@ psql -U postgres -d youtube_insights -f data_base/fact_videos_rows.sql
 psql -U postgres -d youtube_insights -f data_base/dim_classificacao_ia_rows.sql
 psql -U postgres -d youtube_insights -f data_base/etl_logs_rows.sql
 psql -U postgres -d youtube_insights -f data_base/vw_dim_linguagem_rows.sql
+```
 O script vw_dim_duracao.sql cria uma view baseada na duração (duration_sec) e aplica a seguinte categorização:
 
 Faixa	Intervalo de tempo (s)
