@@ -1,0 +1,741 @@
+{
+  "name": "ETL_IA_CLASSIFICACAO",
+  "nodes": [
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1360,
+        80
+      ],
+      "id": "7927cc12-3b32-4913-864c-1fc3286a6a70",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "g5D1JROzvEtj0VZR",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => ({\n  json: {\n    ...item.json,\n    __originalId: item.json.id\n  }\n}));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        -180
+      ],
+      "id": "9038f756-2d38-4b8b-b864-2d8726f9fbac",
+      "name": "Preparar dados para o modelo"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Sua tarefa é classificar vídeos do YouTube relacionados à inteligência artificial em múltiplas dimensões. Use as informações abaixo para inferir as características solicitadas:\n\nRegras obrigatórias:\n\n- O campo \"classificacao_desc\" deve conter **exatamente** um dos seguintes:\n  \"conteúdo técnico\", \"superficial\", \"clickbait\" ou \"híbrido\"\n- Nunca utilize termos como \"comercial\", \"informativo\" ou outros nesse campo\n- Esses termos devem aparecer apenas em \"intencao_principal\" ou \"intencao_secundaria\"\n\nRetorne somente um JSON puro e válido.\n\n1. O campo \"classificacao_desc\" deve conter apenas um dos seguintes valores:\n  - \"conteúdo técnico\"\n  - \"superficial\"\n  - \"clickbait\"\n  - \"híbrido\"\n\n2. \"classificacao_score\": um número entre 0.0 e 1.0 representando sua confiança na classificação acima. Use pelo menos um dígito antes e depois do ponto (ex: 0.85).\n\nO valor de \"classificacao_score\" deve sempre ter pelo menos um dígito antes e depois do ponto decimal.  \nUse formatos como 0.85, 0.90, 0.50 — nunca use \"0.\" ou \"1.\".\n\n3. \"nivel_tecnico\": grau de profundidade do conteúdo (0.0 a 1.0). Quanto mais técnico e detalhado, mais próximo de 1.\n\n4. \"intencao_principal\": objetivo dominante do vídeo. Escolha uma das seguintes:\n   - \"educacional\", \"informativo\", \"opinativo\", \"comercial\", \"motivacional\", \"entretenimento\", \"documental\", \"experimental\", \"alerta/risco\", \"comparativo\", \"politico/ideológico\", \"demonstrativo\"\n\n5. \"intencao_secundaria\": intenção secundária (opcional). Se aplicável, escolha uma das mesmas opções acima. Se não aplicável, retorne \"nenhuma\".\n\n6. \"linguagem\": estilo de comunicação predominante escolha um dos seguintes valores:\n   - \"neutra\", \"alarmista\", \"sensacionalista\", \"acadêmica\"\n\n7. \"observacoes_ia\": explique sua classificação geral em até 25 palavras. Seja direto e evite redundâncias, sempre use o idoma PT-BR.\n\nRetorne somente um JSON **válido**, com todas as chaves entre aspas duplas e números formatados corretamente (ex: 0.87).  \nNão use blocos de código, markdown, comentários ou quebras de linha. Apenas JSON.\n\n---\n\nUse os dados abaixo para embasar sua análise:\n\nTítulo: {{ $json.title }}\n\nDescrição: {{ $json.description }}\n\nTags: {{ $json.tags }}\n\nCategorias: {{ $json.topic_categories }}\n\nDuração em segundos: {{ $json.duration_sec }}\n\nVisualizações: {{ $json.view_count }}\n\nCurtidas: {{ $json.like_count }}\n\nComentários: {{ $json.comment_count }}\n\nCanal: {{ $json.channel_title }}\n\nPublicado em: {{ $json.published_at }}\n\nID do vídeo: {{ $json.id }}\n\nInclua também no JSON final o campo \"video_id\", copiando exatamente o valor abaixo:\n\nvideo_id: {{ $json.id }}\n\nAtenção: Se você retornar qualquer valor em \"classificacao_desc\" fora da lista permitida abaixo, seu resultado será descartado.\n\nValores permitidos para \"classificacao_desc\", jamais classifique um video que não é \"conteúdo técnico, superficial, clickbait, híbrido\". faça uma validação precisa encima disso antes de fechar a analise, segue novamente abaixo a listagem para reforçar essa fase da análise:\n- \"conteúdo técnico\"\n- \"superficial\"\n- \"clickbait\"\n- \"híbrido\"\n\nNão use valores como \"documental\", \"educacional\", \"comercial\", \"informativo\" ou similares neste campo. Esses termos devem aparecer apenas em \"intencao_principal\" ou \"intencao_secundaria\".\n\nResponda exatamente neste formato\n\nValores permitidos para \"classificacao_desc\", jamais classifique um video que não é \"conteúdo técnico, superficial, clickbait, híbrido\". faça uma validação precisa encima disso antes de fechar a analise, segue novamente abaixo a listagem para reforçar essa fase da análise:\n- \"conteúdo técnico\"\n- \"superficial\"\n- \"clickbait\"\n- \"híbrido\"\n\nValores permitidos para \"classificacao_desc\", jamais classifique um video que não é \"conteúdo técnico, superficial, clickbait, híbrido\". faça uma validação precisa encima disso antes de fechar a analise, segue novamente abaixo a listagem para reforçar essa fase da análise:\n- \"conteúdo técnico\"\n- \"superficial\"\n- \"clickbait\"\n- \"híbrido\"\n\nValores permitidos para \"classificacao_desc\", jamais classifique um video que não é \"conteúdo técnico, superficial, clickbait, híbrido\". faça uma validação precisa encima disso antes de fechar a analise, segue novamente abaixo a listagem para reforçar essa fase da análise:\n- \"conteúdo técnico\"\n- \"superficial\"\n- \"clickbait\"\n- \"híbrido\"",
+        "hasOutputParser": true,
+        "batching": {
+          "batchSize": 1,
+          "delayBetweenBatches": 5
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        1400,
+        -160
+      ],
+      "id": "fa2b13d5-ecd8-46af-9905-0bc31aacb93f",
+      "name": "OpenAI Classificação"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n  id,\n  title,\n  description,\n  tags,\n  topic_categories,\n  duration_sec,\n  view_count,\n  like_count,\n  comment_count,\n  channel_title,\n  published_at\nFROM public.fact_videos\nWHERE id NOT IN (\n  SELECT video_id FROM public.dim_classificacao_ia\n)\nORDER BY published_at ASC",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        100,
+        -160
+      ],
+      "id": "6c77b3c2-996b-465c-9f72-496f968bfa6f",
+      "name": "Query dinamica no Supabase , itens sem classificação",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "n3sBuzz4GDYDXX7w",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "batchSize": 200,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        980,
+        -180
+      ],
+      "id": "31fc023f-4ec7-4c2e-b614-88e5b27975e7",
+      "name": "Loop para controle de requisições"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1200,
+        -360
+      ],
+      "id": "0b4daa9b-ca70-41f7-b7a6-e6d30c22332d",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"video_id\": \"abc123\",\n  \"classificacao_desc\": \"conteúdo técnico\",\n  \"classificacao_score\": 0.82,\n  \"nivel_tecnico\": 0.65,\n  \"intencao_principal\": \"educacional\",\n  \"intencao_secundaria\": \"nenhuma\",\n  \"linguagem\": \"neutra\",\n  \"observacoes_ia\": \"Explicações curtas em PT-BR\"\n}\n",
+        "autoFix": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1720,
+        80
+      ],
+      "id": "cbadd559-0e3e-4dcb-8583-8c3d50797015",
+      "name": "Ajuste de Estrutura de Output IA"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-3.5-turbo",
+          "mode": "list",
+          "cachedResultName": "gpt-3.5-turbo"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1720,
+        220
+      ],
+      "id": "65a0ce7b-9d89-495b-88bd-ce45e30075af",
+      "name": "OpenAI Chat Model 2",
+      "credentials": {
+        "openAiApi": {
+          "id": "g5D1JROzvEtj0VZR",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "dim_classificacao_ia",
+          "mode": "list",
+          "cachedResultName": "dim_classificacao_ia"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "video_id": "={{ $json.output.video_id }}",
+            "classificacao_desc": "={{ $json.output.classificacao_desc }}",
+            "classificacao_score": "={{ $json.output.classificacao_score }}",
+            "observacoes_ia": "={{ $json.output.observacoes_ia }}",
+            "nivel_tecnico": "={{ $json.output.nivel_tecnico }}",
+            "linguagem": "={{ $json.output.linguagem }}",
+            "intencao_secundaria": "={{ $json.output.intencao_secundaria }}",
+            "intencao_principal": "={{ $json.output.intencao_principal }}"
+          },
+          "matchingColumns": [
+            "video_id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "video_id",
+              "displayName": "video_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "classificacao_desc",
+              "displayName": "classificacao_desc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "classificacao_score",
+              "displayName": "classificacao_score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "created_date",
+              "displayName": "created_date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "observacoes_ia",
+              "displayName": "observacoes_ia",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "nivel_tecnico",
+              "displayName": "nivel_tecnico",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "intencao_principal",
+              "displayName": "intencao_principal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "intencao_secundaria",
+              "displayName": "intencao_secundaria",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "linguagem",
+              "displayName": "linguagem",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1460,
+        -360
+      ],
+      "id": "0daead02-aec8-44dd-9202-de9efa4d5760",
+      "name": "Upsert Classificação IA",
+      "credentials": {
+        "postgres": {
+          "id": "n3sBuzz4GDYDXX7w",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "6e377028-5e61-4fa1-ae25-f27ffdfd6939",
+              "leftValue": "={{ Object.keys($json).length > 0 }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        340,
+        -160
+      ],
+      "id": "882580ad-5a10-4a66-8cd9-9736fd3da3eb",
+      "name": "Validação Query",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "etl_logs",
+          "mode": "list",
+          "cachedResultName": "etl_logs"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "fluxo": "ETL_IA_CLASSIFICACAO",
+            "etapa": "Query dinamica no supabase",
+            "status": "vazio",
+            "mensagem": "Nenhum vídeo encontrado para classificação"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fluxo",
+              "displayName": "fluxo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "etapa",
+              "displayName": "etapa",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "mensagem",
+              "displayName": "mensagem",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        660,
+        40
+      ],
+      "id": "c91c3b03-45f0-46c0-86e8-b9554c8e9bda",
+      "name": "Insert do Log de Execução da Query",
+      "credentials": {
+        "postgres": {
+          "id": "n3sBuzz4GDYDXX7w",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "496483ab-3772-43de-9507-3c7cb239f9f7",
+              "leftValue": "={{ Object.keys($json).length > 0 }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1700,
+        -360
+      ],
+      "id": "d9d81dee-dcd9-4290-adc0-18a3a8b7966a",
+      "name": "Validação Operação do Upsert"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "etl_logs",
+          "mode": "list",
+          "cachedResultName": "etl_logs"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "fluxo": "ETL_IA_CLASSIFICACAO",
+            "etapa": "Upsert IA Classificacao",
+            "status": "error",
+            "mensagem": "Nenhuma linha foi afetada pelo upsert (possível falha ou já existente)",
+            "timestamp": "={{ $now }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "fluxo",
+              "displayName": "fluxo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "etapa",
+              "displayName": "etapa",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "mensagem",
+              "displayName": "mensagem",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1920,
+        -260
+      ],
+      "id": "1203a343-ee4c-4b8b-b667-3b25474bba0b",
+      "name": "Envio do Erro para base de dados",
+      "credentials": {
+        "postgres": {
+          "id": "n3sBuzz4GDYDXX7w",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "02326d1d-092b-4ecb-b75a-977594c1a63f",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -100,
+        -160
+      ],
+      "id": "a39ab1f0-e071-44db-95cf-4cbc4f9ca172",
+      "name": "Webhook",
+      "webhookId": "02326d1d-092b-4ecb-b75a-977594c1a63f"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "OpenAI Classificação",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar dados para o modelo": {
+      "main": [
+        [
+          {
+            "node": "Loop para controle de requisições",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Classificação": {
+      "main": [
+        [
+          {
+            "node": "Loop para controle de requisições",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query dinamica no Supabase , itens sem classificação": {
+      "main": [
+        [
+          {
+            "node": "Validação Query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop para controle de requisições": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "OpenAI Classificação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Upsert Classificação IA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ajuste de Estrutura de Output IA": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "OpenAI Classificação",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model 2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Ajuste de Estrutura de Output IA",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validação Query": {
+      "main": [
+        [
+          {
+            "node": "Preparar dados para o modelo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Insert do Log de Execução da Query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Classificação IA": {
+      "main": [
+        [
+          {
+            "node": "Validação Operação do Upsert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validação Operação do Upsert": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Envio do Erro para base de dados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Query dinamica no Supabase , itens sem classificação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "McgGd6aU5ysia89C"
+  },
+  "versionId": "3744e2e9-667a-4308-ae62-fb544dbe0067",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "461d80cab58e123c9e6a3b13bee9316057fca5e248fd328b1b80deb71002d61d"
+  },
+  "id": "l9aBcHdnvKuNH9Dt",
+  "tags": []
+}
