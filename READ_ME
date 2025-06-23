@@ -85,7 +85,24 @@ youtube-insights-ia/
    ```
 2. Importe os fluxos n8n de `/dataflow_n8n` , ETL_FLOW_MAIN , ETL_IA_CLASSIFICACAO e ETL_ERROR_LOGS_WORKFLOW
 3. Crie as tabelas Supabase com os scripts de `/data_base`
-4. Configure as credenciais (OpenAI, Supabase)
+3.1. Execute os scripts SQL em `/data_base` para criar e popular as tabelas:
+
+```bash
+psql -U postgres -d youtube_insights -f data_base/vw_dim_canal.sql
+psql -U postgres -d youtube_insights -f data_base/vw_dim_duracao.sql
+psql -U postgres -d youtube_insights -f data_base/fact_videos_rows.sql
+psql -U postgres -d youtube_insights -f data_base/dim_classificacao_ia_rows.sql
+psql -U postgres -d youtube_insights -f data_base/etl_logs_rows.sql
+psql -U postgres -d youtube_insights -f data_base/vw_dim_linguagem_rows.sql
+O script vw_dim_duracao.sql cria uma view baseada na duração (duration_sec) e aplica a seguinte categorização:
+
+Faixa	Intervalo de tempo (s)
+Curta	até 180 s
+Média	181–600 s
+Longa	601–1800 s
+Muito Longa	acima de 1800 s
+
+4. Configure as credenciais no N8N (OpenAI, Supabase) , não adicionei a credencial da OpenAI API KEY por questões de segurança para criar a chave, é necessário logar no site da OpenAI e gear uma chave.
 5. Configure no fim do fluxo 'ETL_FLOW_MAIN' o link do webhook do 'ETL_IA_CLASSIFICACAO'.
 5. Execute o fluxo `ETL_FLOW_MAIN` no fim da execução ele irá enviar um request (POST) para o outro fluxo que está configurado com um webhook.
 6. Abra o `.pbix` no Power BI
