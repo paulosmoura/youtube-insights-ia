@@ -37,6 +37,22 @@ As informações dos vídeos e classificações são salvas em tabelas relaciona
 
 Métricas de engajamento, views, canais e cruzamentos são visualizadas em painéis interativos.
 
+## Decisão N8N vs Python para esse projeto
+
+Apesar de ter experiência com Python e já ter desenvolvido rotinas de extração e web scraping com bibliotecas como requests, BeautifulSoup e Selenium, optei por utilizar o n8n como ferramenta de orquestração e coleta de dados neste projeto por três principais razões:
+
+### 1. Velocidade de prototipação
+
+O n8n permite criar e testar fluxos de extração e automação com grande rapidez, sem a necessidade de escrever código repetitivo para controle de fluxo, logging ou tratamento de erros básicos. Isso foi importante para iterar rapidamente durante o desenvolvimento inicial.
+
+### 2. Observabilidade nativa
+
+A interface visual do n8n facilita o monitoramento das etapas do ETL, incluindo checkpoints, tentativas automáticas, e logging customizado — o que é essencial para projetos que processam dados em lote como este.
+
+### 3. Escalabilidade e manutenção simplificada
+
+Por se tratar de um projeto que pode ser disparado periodicamente e operado por múltiplos usuários ou clientes, o n8n proporciona uma estrutura mais acessível e de baixo custo para manutenção e extensão futura.
+
 ## Ferramentas Utilizadas
 
 * **n8n**: Orquestração e automação do pipeline de dados.
