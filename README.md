@@ -141,4 +141,47 @@ Esses valores são baseados em uma execução de **989 vídeos**.
 
 O projeto pode ser parelelizado e adaptado para rodar mais vídeos.
 
----
+## Melhorias Futuras
+
+O projeto pode ser expandido com diversas melhorias que aumentam sua robustez, escalabilidade e capacidade analítica.
+
+### 1. Enriquecimento de Localização e Região
+
+A YouTube Data API v3 não retorna dados confiáveis sobre a origem geográfica dos vídeos. Como melhoria, sugere-se:
+
+* Inferir a localização com base na análise de título, descrição ou comentários.
+* Integrar APIs externas, como:
+  * ipinfo.io (localização por IP)
+  * SerpAPI ou scraping controlado de SERPs
+  * Plataformas como SocialBlade para metadados de canal
+
+### 2. Disparo Automático de Dashboards
+
+Para ampliar a aplicabilidade do projeto:
+
+* Automatizar o envio de dashboards em PDF por e-mail com periodicidade diária ou semanal.
+* Alternativas técnicas:
+  * Power BI Service + Power Automate (versão Pro)
+  * Scripts Python com renderização e envio por SMTP
+  * Integração via n8n com gatilho recorrente
+
+### 3. Aprimoramento da Classificação por IA
+
+* Substituir o modelo atual por versões mais avançadas (ex: GPT-4).
+* Criar um ciclo de validação supervisionada com feedback humano.
+* Incorporar critérios objetivos como análise de palavras-chave e links externos.
+
+### 4. Monitoramento de Tendências
+
+* Criar um módulo que detecta aumento repentino de visualizações por termo de busca.
+* Utilizar Google Trends como fonte complementar para sugerir novos termos.
+
+### 5. Métricas Avançadas de Canal e Engajamento
+
+* Analisar o crescimento dos canais ao longo do tempo.
+* Correlacionar tipos de conteúdo com variações de engajamento (likes, comentários, retenção).
+
+### 6. Modularização e Escalabilidade
+
+* Dividir o projeto em etapas desacopladas: extração, classificação, armazenamento e visualização.
+* Viabilizar deploy com containers Docker para facilitar replicação e escalabilidade.
